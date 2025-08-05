@@ -24,3 +24,12 @@ class Bible:
 
     def get_books(self) -> list:
         return list(self.data.keys())
+
+    def search(self, keyword: str) -> list:
+        results = []
+        for book in self.data:
+            for chapter in self.data[book]:
+                for verse, text in self.data[book][chapter].items():
+                    if keyword.lower() in text.lower():
+                        results.append(f"{book} {chapter}:{verse}")
+        return results
