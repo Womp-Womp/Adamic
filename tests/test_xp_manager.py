@@ -35,3 +35,18 @@ def test_persistence(tmp_path):
     db2 = Database(db_path)
     manager2 = XPManager(db2)
     assert manager2.get_xp(user) == 1
+
+
+def test_rating_influences_xp(tmp_path):
+    db = Database(tmp_path / "xp.db")
+    manager = XPManager(db)
+    passage = "Genesis 1:1"
+    user1 = "alice"
+    user2 = "bob"
+    manager.award_verse_view(user1, passage)
+    assert manager.get_xp(user1) == 1
+    avg, xp = manager.submit_rating(user2, passage, 4)
+    assert avg == 4
+    assert xp == 4
+    manager.award_verse_view(user1, passage)
+    assert manager.get_xp(user1) == 6

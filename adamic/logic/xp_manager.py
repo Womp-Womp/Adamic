@@ -19,17 +19,22 @@ class XPManager:
         """Return the total XP for ``user_id``."""
         return self.db.get_xp(user_id)
 
-    def award_verse_view(self, user_id: str, points: int | None = None) -> int:
+    def award_verse_view(
+        self, user_id: str, passage: str | None = None, points: int | None = None
+    ) -> int:
         """Award XP for viewing a verse.
 
         Args:
             user_id: Identifier for the user.
+            passage: Optional passage identifier (e.g. "John 3:16").
             points: Optional override for the number of points to award.
 
         Returns:
             The user's new total XP.
         """
         delta = points if points is not None else self.VERSE_VIEW_POINTS
+        if passage is not None:
+            delta += round(self.db.get_average_rating(passage))
         return self.db.increment_xp(user_id, delta)
 
     def award_quiz_answer(
@@ -61,3 +66,18 @@ class XPManager:
                 else self.QUIZ_INCORRECT_POINTS
             )
         return self.db.increment_xp(user_id, delta)
+
+    def submit_rating(self, user_id: str, passage: str, rating: int) -> tuple[float, int]:
+        """Record a user's rating and award XP based on the aggregate rating.
+
+        Args:
+            user_id: Identifier for the user.
+            passage: Passage identifier (e.g. "John 3:16").
+            rating: Rating value provided by the user.
+
+        Returns:
+            A tuple of (average rating for the passage, user's new total XP).
+        """
+        avg = self.db.set_rating(user_id, passage, rating)
+        xp = self.db.increment_xp(user_id, round(avg))
+        return avg, xp
