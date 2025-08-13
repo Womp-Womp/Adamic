@@ -4,6 +4,7 @@ from adamic.bible import Bible
 from adamic.ai import stream_ai_response
 from adamic.logic.database import Database
 from adamic.logic.xp_manager import XPManager
+from adamic.logic.leaderboard import PAGE_SIZE, top_users
 
 # Load the Bible data
 data_path = Path(__file__).parent / "adamic" / "data" / "sample_bible.json"
@@ -30,6 +31,15 @@ def ai_query(question, timeout):
     for chunk in stream_ai_response(question, timeout=timeout):
         accumulated += chunk
         yield accumulated
+
+
+def load_leaderboard(period: str, page: int):
+    page = int(page)
+    rows = top_users(database, page=page, period=period)
+    return [
+        [idx + 1 + (page - 1) * PAGE_SIZE, user_id, points]
+        for idx, (user_id, points) in enumerate(rows)
+    ]
 
 with gr.Blocks() as demo:
     gr.Markdown("# Adamic Bible Reader")
@@ -82,6 +92,21 @@ with gr.Blocks() as demo:
             stream=True,
         )
         cancel_button.click(fn=None, inputs=None, outputs=None, cancels=[stream])
+
+    with gr.Tab("Leaderboard"):
+        period_radio = gr.Radio(
+            ["all-time", "weekly"], label="Period", value="all-time"
+        )
+        page_number = gr.Number(label="Page", value=1, precision=0, minimum=1)
+        load_button = gr.Button("Load")
+        leaderboard_table = gr.Dataframe(
+            headers=["Rank", "User", "XP"], interactive=False
+        )
+        load_button.click(
+            load_leaderboard,
+            inputs=[period_radio, page_number],
+            outputs=leaderboard_table,
+        )
 
 if __name__ == "__main__":
     demo.launch()
