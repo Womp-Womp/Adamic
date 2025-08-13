@@ -2,6 +2,7 @@ import gradio as gr
 from pathlib import Path
 from adamic.bible import Bible
 from adamic.ai import get_ai_response
+from adamic.config import settings
 
 # Load the Bible data
 data_path = Path(__file__).parent / "adamic" / "data" / "sample_bible.json"
