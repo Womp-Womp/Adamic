@@ -1,7 +1,7 @@
 import gradio as gr
 from pathlib import Path
 from adamic.bible import Bible
-from adamic.ai import get_ai_response
+from adamic.ai import stream_ai_response
 
 # Load the Bible data
 data_path = Path(__file__).parent / "adamic" / "data" / "sample_bible.json"
@@ -14,8 +14,11 @@ def search_bible(keyword):
     results = bible.search(keyword)
     return "\n".join(results) if results else "No results found."
 
-def ai_query(question):
-    return get_ai_response(question)
+def ai_query(question, timeout):
+    accumulated = ""
+    for chunk in stream_ai_response(question, timeout=timeout):
+        accumulated += chunk
+        yield accumulated
 
 with gr.Blocks() as demo:
     gr.Markdown("# Adamic Bible Reader")
@@ -48,15 +51,21 @@ with gr.Blocks() as demo:
     with gr.Tab("AI Assistant"):
         with gr.Row():
             question_input = gr.Textbox(label="Ask a question")
+            timeout_input = gr.Number(
+                label="Timeout (s)", value=15, precision=0, minimum=1
+            )
 
         ai_output_text = gr.Textbox(label="AI Response")
 
         ask_button = gr.Button("Ask")
-        ask_button.click(
+        cancel_button = gr.Button("Cancel")
+        stream = ask_button.click(
             ai_query,
-            inputs=question_input,
+            inputs=[question_input, timeout_input],
             outputs=ai_output_text,
+            stream=True,
         )
+        cancel_button.click(fn=None, inputs=None, outputs=None, cancels=[stream])
 
 if __name__ == "__main__":
     demo.launch()
