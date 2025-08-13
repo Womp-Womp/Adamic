@@ -3,17 +3,17 @@
 # pip install google-genai
 
 import base64
-import os
 from google import genai
 from google.genai import types
+from adamic.config import settings
 
 
 def generate():
     client = genai.Client(
-        api_key=os.environ.get("GEMINI_API_KEY"),
+        api_key=settings.api_key,
     )
 
-    model = "gemini-2.5-pro"
+    model = settings.model_name
     contents = [
         types.Content(
             role="user",
@@ -162,17 +162,17 @@ if __name__ == "__main__":
 # pip install google-genai
 
 import base64
-import os
 from google import genai
 from google.genai import types
+from adamic.config import settings
 
 
 def generate():
     client = genai.Client(
-        api_key=os.environ.get("GEMINI_API_KEY"),
+        api_key=settings.api_key,
     )
 
-    model = "gemini-2.5-pro"
+    model = settings.model_name
     contents = [
         types.Content(
             role="user",
@@ -335,17 +335,17 @@ if __name__ == "__main__":
 # pip install google-genai
 
 import base64
-import os
 from google import genai
 from google.genai import types
+from adamic.config import settings
 
 
 def generate():
     client = genai.Client(
-        api_key=os.environ.get("GEMINI_API_KEY"),
+        api_key=settings.api_key,
     )
 
-    model = "gemini-2.5-pro"
+    model = settings.model_name
     contents = [
         types.Content(
             role="user",

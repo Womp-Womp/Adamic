@@ -33,6 +33,13 @@ This project is an AI-powered Bible reader designed to provide a modern, accessi
     pip install -e .
     ```
 
+### Configuration
+
+Set the following environment variables before running the application:
+
+* `GEMINI_API_KEY` – API key for the Gemini model (required)
+* `GEMINI_MODEL_NAME` – Model name to use (defaults to `gemini-2.5-pro`)
+
 ### Running the Application
 
 To start the Gradio web application, run the following command:

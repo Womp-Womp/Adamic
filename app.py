@@ -1,6 +1,7 @@
 import gradio as gr
 from pathlib import Path
 from adamic.bible import Bible
+from adamic.config import settings
 from adamic.ai import stream_ai_response
 from adamic.logic.database import Database
 from adamic.logic.xp_manager import XPManager
