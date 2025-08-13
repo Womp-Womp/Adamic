@@ -17,10 +17,22 @@ xp_manager = XPManager(database)
 USER_ID = "default"
 
 
+def _format_passage(book, chapter, verse):
+    return f"{book} {int(chapter)}:{int(verse)}"
+
+
 def view_verse(book, chapter, verse):
+    passage = _format_passage(book, chapter, verse)
     text = bible.get_verse(book, chapter, verse)
-    xp = xp_manager.award_verse_view(USER_ID)
-    return text, xp
+    xp = xp_manager.award_verse_view(USER_ID, passage)
+    avg = database.get_average_rating(passage)
+    return text, xp, avg
+
+
+def rate_passage(book, chapter, verse, rating):
+    passage = _format_passage(book, chapter, verse)
+    avg, xp = xp_manager.submit_rating(USER_ID, passage, int(rating))
+    return avg, xp
 
 def search_bible(keyword):
     results = bible.search(keyword)
@@ -51,16 +63,20 @@ with gr.Blocks() as demo:
             chapter_input = gr.Number(label="Chapter", precision=0)
             verse_input = gr.Number(label="Verse", precision=0)
         output_text = gr.Textbox(label="Verse Text")
-        xp_display = gr.Number(
-            label="Current XP",
-            value=xp_manager.get_xp(USER_ID),
-            interactive=False,
-        )
+        xp_display = gr.Number(label="Current XP", value=xp_manager.get_xp(USER_ID), interactive=False)
+        avg_display = gr.Number(label="Average Rating", value=0, interactive=False)
         load_button = gr.Button("Load Verse")
         load_button.click(
             view_verse,
             inputs=[book_dropdown, chapter_input, verse_input],
-            outputs=[output_text, xp_display],
+            outputs=[output_text, xp_display, avg_display],
+        )
+        rating_slider = gr.Slider(1, 5, step=1, label="Your Rating")
+        rate_button = gr.Button("Submit Rating")
+        rate_button.click(
+            rate_passage,
+            inputs=[book_dropdown, chapter_input, verse_input, rating_slider],
+            outputs=[avg_display, xp_display],
         )
 
         gr.Markdown("---")

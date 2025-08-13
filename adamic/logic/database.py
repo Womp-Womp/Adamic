@@ -6,7 +6,7 @@ from typing import Optional, Sequence
 
 
 class Database:
-    """Simple SQLite-based storage for user experience points."""
+    """Simple SQLite-based storage for user experience points and ratings."""
 
     def __init__(self, path: Path):
         self.path = Path(path)
@@ -25,7 +25,22 @@ class Database:
         )
         cur.execute(
             """
+            CREATE TABLE IF NOT EXISTS ratings (
+                user_id TEXT,
+                passage TEXT,
+                rating INTEGER NOT NULL,
+                PRIMARY KEY (user_id, passage)
+
             CREATE TABLE IF NOT EXISTS xp_events (
+                user_id TEXT NOT NULL,
+                points INTEGER NOT NULL,
+                timestamp INTEGER NOT NULL
+            )
+            """
+        )
+        cur.execute(
+            """
+           CREATE TABLE IF NOT EXISTS xp_events (
                 user_id TEXT NOT NULL,
                 points INTEGER NOT NULL,
                 timestamp INTEGER NOT NULL
@@ -59,6 +74,25 @@ class Database:
         self.set_xp(user_id, new_total)
         return new_total
 
+    # Rating helpers
+    def set_rating(self, user_id: str, passage: str, rating: int) -> float:
+        """Store a user's rating for a passage and return new average rating."""
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO ratings (user_id, passage, rating) VALUES (?, ?, ?)
+            ON CONFLICT(user_id, passage) DO UPDATE SET rating=excluded.rating
+            """,
+            (user_id, passage, rating),
+        )
+        self.conn.commit()
+        return self.get_average_rating(passage)
+
+    def get_average_rating(self, passage: str) -> float:
+        cur = self.conn.cursor()
+        cur.execute("SELECT AVG(rating) FROM ratings WHERE passage=?", (passage,))
+        row = cur.fetchone()
+        return float(row[0]) if row and row[0] is not None else 0.0
     # XP event helpers
     def add_event(
         self, user_id: str, points: int, timestamp: Optional[int] = None
