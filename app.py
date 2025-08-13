@@ -16,10 +16,17 @@ xp_manager = XPManager(database)
 USER_ID = "default"
 
 
+def badges_text(user_id: str) -> str:
+    badges = xp_manager.get_badges(user_id)
+    if badges:
+        return f"User: {user_id} | Badges: {', '.join(badges)}"
+    return f"User: {user_id}"
+
+
 def view_verse(book, chapter, verse):
     text = bible.get_verse(book, chapter, verse)
     xp = xp_manager.award_verse_view(USER_ID)
-    return text, xp
+    return text, xp, badges_text(USER_ID)
 
 def search_bible(keyword):
     results = bible.search(keyword)
@@ -33,6 +40,7 @@ def ai_query(question, timeout):
 
 with gr.Blocks() as demo:
     gr.Markdown("# Adamic Bible Reader")
+    user_badges_display = gr.Markdown(badges_text(USER_ID))
 
     with gr.Tab("Reader"):
         gr.Markdown("### Verse Lookup")
@@ -50,7 +58,7 @@ with gr.Blocks() as demo:
         load_button.click(
             view_verse,
             inputs=[book_dropdown, chapter_input, verse_input],
-            outputs=[output_text, xp_display],
+            outputs=[output_text, xp_display, user_badges_display],
         )
 
         gr.Markdown("---")

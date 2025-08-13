@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import List
 
 from .database import Database
 
@@ -14,6 +15,11 @@ class XPManager:
     VERSE_VIEW_POINTS: int = 1
     QUIZ_CORRECT_POINTS: int = 10
     QUIZ_INCORRECT_POINTS: int = 0
+    BADGE_THRESHOLDS: dict[str, int] = None
+
+    def __post_init__(self) -> None:
+        if self.BADGE_THRESHOLDS is None:
+            self.BADGE_THRESHOLDS = {"100 Verses": 100}
 
     def get_xp(self, user_id: str) -> int:
         """Return the total XP for ``user_id``."""
@@ -30,7 +36,12 @@ class XPManager:
             The user's new total XP.
         """
         delta = points if points is not None else self.VERSE_VIEW_POINTS
-        return self.db.increment_xp(user_id, delta)
+        total = self.db.increment_xp(user_id, delta)
+        verses_read = self.db.increment_verses_read(user_id, 1)
+        for badge, threshold in self.BADGE_THRESHOLDS.items():
+            if verses_read >= threshold:
+                self.db.add_badge(user_id, badge)
+        return total
 
     def award_quiz_answer(
         self,
@@ -61,3 +72,9 @@ class XPManager:
                 else self.QUIZ_INCORRECT_POINTS
             )
         return self.db.increment_xp(user_id, delta)
+
+    def get_badges(self, user_id: str) -> List[str]:
+        return self.db.get_badges(user_id)
+
+    def get_verses_read(self, user_id: str) -> int:
+        return self.db.get_verses_read(user_id)

@@ -35,3 +35,14 @@ def test_persistence(tmp_path):
     db2 = Database(db_path)
     manager2 = XPManager(db2)
     assert manager2.get_xp(user) == 1
+
+
+def test_badge_awarded(tmp_path):
+    db = Database(tmp_path / "xp.db")
+    manager = XPManager(db)
+    user = "carol"
+    for _ in range(100):
+        manager.award_verse_view(user)
+    assert manager.get_verses_read(user) == 100
+    assert "100 Verses" in manager.get_badges(user)
+
