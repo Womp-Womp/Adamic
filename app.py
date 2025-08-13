@@ -2,13 +2,24 @@ import gradio as gr
 from pathlib import Path
 from adamic.bible import Bible
 from adamic.ai import stream_ai_response
+from adamic.logic.database import Database
+from adamic.logic.xp_manager import XPManager
 
 # Load the Bible data
 data_path = Path(__file__).parent / "adamic" / "data" / "sample_bible.json"
 bible = Bible(data_path)
 
-def get_verse_text(book, chapter, verse):
-    return bible.get_verse(book, chapter, verse)
+# XP management
+db_path = Path(__file__).parent / "xp.db"
+database = Database(db_path)
+xp_manager = XPManager(database)
+USER_ID = "default"
+
+
+def view_verse(book, chapter, verse):
+    text = bible.get_verse(book, chapter, verse)
+    xp = xp_manager.award_verse_view(USER_ID)
+    return text, xp
 
 def search_bible(keyword):
     results = bible.search(keyword)
@@ -30,11 +41,16 @@ with gr.Blocks() as demo:
             chapter_input = gr.Number(label="Chapter", precision=0)
             verse_input = gr.Number(label="Verse", precision=0)
         output_text = gr.Textbox(label="Verse Text")
+        xp_display = gr.Number(
+            label="Current XP",
+            value=xp_manager.get_xp(USER_ID),
+            interactive=False,
+        )
         load_button = gr.Button("Load Verse")
         load_button.click(
-            get_verse_text,
+            view_verse,
             inputs=[book_dropdown, chapter_input, verse_input],
-            outputs=output_text,
+            outputs=[output_text, xp_display],
         )
 
         gr.Markdown("---")
